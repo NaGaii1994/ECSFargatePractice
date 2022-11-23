@@ -14,3 +14,11 @@ resource "aws_key_pair" "ec2_key_pair" {
   key_name   = "${var.project_name}_public_key"
   public_key = file("${var.ssh_public_key}")
 }
+
+resource "aws_eip" "ec2" {
+  vpc      = true
+  instance   = aws_instance.ec2.id
+  tags = {
+    Name = "${var.project_name}_ec2_eip"
+  }
+}
