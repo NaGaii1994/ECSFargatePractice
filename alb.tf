@@ -90,8 +90,8 @@ resource "aws_lb_listener" "https" {
     type = "fixed-response"
     fixed_response {
       content_type = "text/plain"
-      message_body = "Success!!!"
-      status_code = "200"
+      message_body = "503 Service Temporarily Unavailable"
+      status_code = "503"
     }
   }
 }
