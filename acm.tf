@@ -1,5 +1,8 @@
 resource "aws_acm_certificate" "cert" {
-  domain_name               = var.host_domain
+  # ワイルドカード証明書で同じドメイン内の複数のサイトを保護
+  domain_name               = "*.${var.host_domain}"
+  # ネイキッドドメインや apex ドメイン(ドメイン名そのもの)を保護
+  subject_alternative_names = [var.host_domain]
   validation_method         = "DNS"
 }
 
