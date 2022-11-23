@@ -45,6 +45,42 @@ resource "aws_lb" "this" {
   }
 }
 
+resource "aws_lb_target_group" "to_nginx" {
+  name = "${var.project_name}"
+
+  # ターゲットグループを作成するVPC
+  vpc_id = "${aws_vpc.vpc.id}"
+
+  # ALBからECSタスクのコンテナへトラフィックを振り分ける設定
+  port        = 80
+  protocol    = "HTTP"
+  target_type = "ip"
+
+  # コンテナへの死活監視設定
+  health_check {
+    port = 80
+    path = "/"
+  }
+}
+
+resource "aws_lb_listener_rule" "to_nginx" {
+  # ルールを追加するリスナー
+  listener_arn = "${aws_lb_listener.https.arn}"
+
+  # 受け取ったトラフィックをターゲットグループへ受け渡す
+  action {
+    type             = "forward"
+    target_group_arn = "${aws_lb_target_group.to_nginx.id}"
+  }
+
+  # ターゲットグループへ受け渡すトラフィックの条件
+  condition {
+    host_header {
+      values = [var.host_domain]
+    }
+  }
+}
+
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.this.arn
   port = 443
