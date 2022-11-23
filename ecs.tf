@@ -23,6 +23,14 @@ resource "aws_ecs_task_definition" "main" {
       name             = "nginx"
       image            = "nginx:1.14"
       portMappings     = [{ containerPort : 80, hostPort: 80}]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options   = {
+          awslogs-region : "ap-northeast-1"
+          awslogs-group : aws_cloudwatch_log_group.nginx.name
+          awslogs-stream-prefix : "ecs"
+        }
+      }
     }
   ])
 }
@@ -101,4 +109,9 @@ resource "aws_ecs_service" "main" {
     container_name   = "nginx"
     container_port   = "80"
   }
+}
+
+resource "aws_cloudwatch_log_group" "nginx" {
+  name              = "/ecs/${var.project_name}/nginx"
+  retention_in_days = 30
 }
