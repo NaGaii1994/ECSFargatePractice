@@ -18,20 +18,13 @@ resource "aws_ecs_task_definition" "main" {
 
   # 起動するコンテナの定義
   # 「nginxを起動し、80ポートを開放する」設定を記述。
-  container_definitions = <<EOL
-[
-  {
-    "name": "nginx",
-    "image": "nginx:1.14",
-    "portMappings": [
-      {
-        "containerPort": 80,
-        "hostPort": 80
-      }
-    ]
-  }
-]
-EOL
+  container_definitions = jsonencode([
+    {
+      name             = "nginx"
+      image            = "nginx:1.14"
+      portMappings     = [{ containerPort : 80, hostPort: 80}]
+    }
+  ])
 }
 
 resource "aws_ecs_cluster" "main" {
