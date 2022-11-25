@@ -27,3 +27,14 @@ variable "rds_instance_class" {
   description = "RDS instance type"
   default     = "db.t2.micro"
 }
+variable "DJANGO_SECRET_KEY" {
+  description = "DJANGO_SECRET_KEY"
+}
+variable "docker_image_url_django" {
+  description = "Docker image to run in the ECS cluster"
+  default     = "<AWS_ACCOUNT_ID>.dkr.ecr.us-west-1.amazonaws.com/django-app:latest"
+}
+variable "docker_image_url_nginx" {
+  description = "Docker image to run in the ECS cluster"
+  default     = "<AWS_ACCOUNT_ID>.dkr.ecr.us-west-1.amazonaws.com/django-app:latest"
+}

@@ -29,3 +29,10 @@ resource "aws_ssm_parameter" "POSTGRES_PASSWORD" {
   key_id = aws_kms_key.this.arn
   value = var.POSTGRES_PASSWORD
 }
+
+resource "aws_ssm_parameter" "DJANGO_SECRET_KEY" {
+  name = "/${var.project_name}/DJANGO_SECRET_KEY"
+  type = "SecureString"
+  key_id = aws_kms_key.this.arn
+  value = var.DJANGO_SECRET_KEY
+}

@@ -1,3 +1,31 @@
+data "aws_ssm_parameter" "DJANGO_SECRET_KEY" {
+  name = "/${var.project_name}/DJANGO_SECRET_KEY"
+  depends_on = [
+    aws_ssm_parameter.DJANGO_SECRET_KEY
+  ]
+}
+
+data "aws_ssm_parameter" "POSTGRES_DB" {
+  name = "/${var.project_name}/POSTGRES_DB"
+  depends_on = [
+    aws_ssm_parameter.POSTGRES_DB
+  ]
+}
+
+data "aws_ssm_parameter" "POSTGRES_USER" {
+  name = "/${var.project_name}/POSTGRES_USER"
+  depends_on = [
+    aws_ssm_parameter.POSTGRES_USER
+  ]
+}
+
+data "aws_ssm_parameter" "POSTGRES_PASSWORD" {
+  name = "/${var.project_name}/POSTGRES_PASSWORD"
+  depends_on = [
+    aws_ssm_parameter.POSTGRES_PASSWORD
+  ]
+}
+
 resource "aws_ecs_task_definition" "main" {
   family = "${var.project_name}"
 
@@ -21,13 +49,59 @@ resource "aws_ecs_task_definition" "main" {
   container_definitions = jsonencode([
     {
       name             = "nginx"
-      image            = "nginx:1.14"
+      image            = "${var.docker_image_url_nginx}"
       portMappings     = [{ containerPort : 80, hostPort: 80}]
       logConfiguration = {
         logDriver = "awslogs"
         options   = {
           awslogs-region : "ap-northeast-1"
           awslogs-group : aws_cloudwatch_log_group.nginx.name
+          awslogs-stream-prefix : "ecs"
+        }
+      }
+    },
+    {
+      name             = "django"
+      image            = "${var.docker_image_url_django}"
+      portMappings     = [{ containerPort : 8000, hostPort: 8000}]
+      command = ["gunicorn", "-w", "3", "-b", ":8000", "hello_django.wsgi:application"]
+      environment = [
+        {
+          name: "ALLOWED_HOSTS"
+          value: "${var.host_domain}"
+        },
+        {
+          name: "POSTGRES_HOST"
+          value: "${aws_db_instance.this.address}"
+        },
+        {
+          name: "POSTGRES_PORT"
+          value: "5432"
+        }
+      ]
+      secrets = [
+        {
+          name: "DJANGO_SECRET_KEY"
+          valueFrom: aws_ssm_parameter.DJANGO_SECRET_KEY.arn
+        },
+        {
+          name: "POSTGRES_DB"
+          valueFrom: data.aws_ssm_parameter.POSTGRES_DB.arn
+        },
+        {
+          name: "POSTGRES_USER"
+          valueFrom: data.aws_ssm_parameter.POSTGRES_USER.arn
+        },
+        {
+          name: "POSTGRES_PASSWORD"
+          valueFrom: data.aws_ssm_parameter.POSTGRES_PASSWORD.arn
+        }
+      ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options   = {
+          awslogs-region : "ap-northeast-1"
+          awslogs-group : aws_cloudwatch_log_group.django.name
           awslogs-stream-prefix : "ecs"
         }
       }
@@ -113,5 +187,10 @@ resource "aws_ecs_service" "main" {
 
 resource "aws_cloudwatch_log_group" "nginx" {
   name              = "/ecs/${var.project_name}/nginx"
+  retention_in_days = 30
+}
+
+resource "aws_cloudwatch_log_group" "django" {
+  name              = "/ecs/${var.project_name}/django"
   retention_in_days = 30
 }
